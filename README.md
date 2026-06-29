@@ -1,10 +1,15 @@
 # RAG Document Q&A System
 
-A full-stack AI engineering project that lets users upload PDF documents 
-and ask natural language questions answered by an LLM grounded in the document content.
+Upload PDFs and ask questions. Returns grounded answers with document citations.
 
 ## Architecture
-archictecture diagram link
+
+```mermaid
+flowchart LR
+    A[React + Vite\nUpload PDF / ask questions] -->|HTTP REST| B[FastAPI\nPOST /documents\nPOST /query]
+    B --> C[ChromaDB\nVector storage]
+    B -->|embeddings + generation| D[OpenAI API\ntext-embedding-3-small\ngpt-4o-mini]
+```
 
 ## Tech Stack
 - FastAPI, ChromaDB, OpenAI (text-embedding-3-small, gpt-4o-mini), React + Vite
@@ -29,7 +34,10 @@ rag-document-qa/
 - Chroma used for V1/V2, migrating to pgvector in V3 for stack consolidation.
 
 ## Roadmap
-- [x] V1: Core RAG pipeline
+- [ ] V1: pipeline_test.py: working RAG loop (proof of concept)
 - [ ] V1: FastAPI wrapper + React UI
 - [ ] V2: Multi-doc, chat history, citations
 - [ ] V3: Auth, streaming, eval metrics
+
+## Demo
+- Screenshots and demo link coming
