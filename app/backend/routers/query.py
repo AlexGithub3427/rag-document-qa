@@ -5,18 +5,16 @@ from services.embedder import embed_single
 from services.retriever import search
 from services.llm import generate
 
+from models.schemas import QueryRequest, QueryResponse
+
 router = APIRouter(
     prefix="/query",
     tags=["Query"]
 )
 
-# define a QueryRequest Pydantic model:
-class QueryRequest(BaseModel):
-    question: str
-
 
 # accepts Query Request body
-@router.post("/")
+@router.post("/", response_model=QueryResponse)
 async def handle_query(request: Request, body: QueryRequest):
     # pass request
     collection = request.app.state.collection
@@ -29,7 +27,10 @@ async def handle_query(request: Request, body: QueryRequest):
     retrieved_chunks = search(embedding, collection)
 
     # calls llm.generate(question, context)
-    answer = generate(body.question, retrieved_chunks["documents"], openai_client)
+    answer = generate(body.question, retrieved_chunks, openai_client)
 
-    # returns {"answer": answer, "sources": chunks}
-    return {"answer": answer, "sources": retrieved_chunks}
+    # returns QueryResponse of answer and retrieved chunks
+    return QueryResponse(
+        answer=answer,
+        chunks=retrieved_chunks
+    )

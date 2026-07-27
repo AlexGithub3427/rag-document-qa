@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     app.state.chroma = chromadb.PersistentClient(path="./chroma")
     app.state.collection = app.state.chroma.get_or_create_collection("documents")
     app.state.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+    
     yield
     # -- Shutdown --
     
@@ -21,7 +21,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], #placeholder
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

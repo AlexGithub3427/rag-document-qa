@@ -1,5 +1,8 @@
+from pydantic import BaseModel
 from chromadb.api.models.Collection import Collection
-from chromadb.api.types import QueryResult
+
+from models.schemas import Chunk
+
 
 def store(text_chunks: list[str], embeddings: list[list[float]], collection: Collection) -> None:
     ids = [f"chunk_{i}" for i in range(len(text_chunks))]
@@ -11,11 +14,15 @@ def store(text_chunks: list[str], embeddings: list[list[float]], collection: Col
     )
 
 
-# function search(query_embedding, collection, n_results=3):
-#     call collection.query(query_embeddings, n_results)
-#     return retrieved documents list
-def search(embedding: list[float], collection: Collection, n_results: int = 5) -> QueryResult:
-    return collection.query(
+#     
+def search(embedding: list[float], collection: Collection, n_results: int = 5) -> list[Chunk]:
+    query_result = collection.query(
         query_embeddings=[embedding],
         n_results=5
     )
+
+    retrieved_chunks = [
+        Chunk(text=text) for text in query_result["documents"][0]
+    ]
+
+    return retrieved_chunks

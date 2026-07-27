@@ -6,17 +6,19 @@ from services.chunker import split_text
 from services.embedder import embed_chunks
 from services.retriever import store
 
+from models.schemas import DocUploadResponse
+
 router = APIRouter(
     prefix="/documents",
     tags=["Documents"]
 )
 
-MAX_FILE_SIZE = 1
+MAX_FILE_SIZE = 1 # currently unused
 ALLOWED_MIME_TYPES = {"application/pdf"}
 
 # Notes:
 # - currently does not validate file size
-@router.post("/")
+@router.post("/", response_model=DocUploadResponse)
 async def upload_document(request: Request, file: UploadFile = File(...)):
     # accepts an uploaded file (PDF)
     # - validate it is pdf 
@@ -46,4 +48,7 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
     store(text_chunks, embeddings, collection)
 
     # returns {"message": "success", "chunks": len(chunks)}
-    return {"message": "success", "chunks": len(text_chunks)}
+    return DocUploadResponse(
+        message="success", 
+        chunk_count=len(text_chunks)
+    )
