@@ -25,7 +25,7 @@ export default function FileUpload({ onFileSelected, onUploadSuccess }: FileUplo
         formData.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:8000/documents', {
+            const response = await fetch('http://localhost:8000/documents/', {
                 method: 'POST',
                 body: formData,
             });

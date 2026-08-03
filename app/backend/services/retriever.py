@@ -1,16 +1,18 @@
 from pydantic import BaseModel
 from chromadb.api.models.Collection import Collection
+from langchain_core.documents import Document
 
 from models.schemas import Chunk
 
 
-def store(text_chunks: list[str], embeddings: list[list[float]], collection: Collection) -> None:
+def store(text_chunks: list[Document], embeddings: list[list[float]], collection: Collection) -> None:
     ids = [f"chunk_{i}" for i in range(len(text_chunks))]
+    documents = [chunk.page_content for chunk in text_chunks]
 
     collection.add(
         ids=ids,
         embeddings=embeddings,
-        documents=text_chunks
+        documents=documents
     )
 
 
