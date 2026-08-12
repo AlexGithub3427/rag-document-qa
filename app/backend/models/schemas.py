@@ -1,16 +1,20 @@
 from pydantic import BaseModel
 
+class Chunk(BaseModel):
+    text: str
+    header_path: str
+
 
 class DocUploadResponse(BaseModel):
     message: str
-    chunk_count: int
+    document_id: str
+    document_title: str
 
 
 class QueryRequest(BaseModel):
     question: str
+    document_id: str
 
-class Chunk(BaseModel):
-    text: str
 
 class QueryResponse(BaseModel):
     answer: str

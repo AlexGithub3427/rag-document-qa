@@ -1,8 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Request
 
-from services.pdf_processor import extract_text
-from services.chunker import split_text
+from services.pdf_processor import pdf_to_markdown
+from services.chunker import split_markdown
 from services.embedder import embed_chunks
 from services.retriever import store
 
@@ -35,20 +35,21 @@ async def upload_document(request: Request, file: UploadFile = File(...)):
     # read file bytes
     file_bytes = await file.read()
 
-    # passes bytes to pdf_processor.extract_text()
-    file_text = extract_text(file_bytes)
+    # from file bytes, extract pdf title and markdown string
+    title, markdown_string = pdf_to_markdown(file_bytes)
 
-    # passes text to chunker.split()
-    text_chunks = split_text(file_text)
+    # pass markdown string into 
+    text_chunks = split_markdown(markdown_string)
 
     # passes chunks to embedder.embed()
     embeddings = embed_chunks(text_chunks, openai_client)
 
     # stores results in Chroma via retriever.store()
-    store(text_chunks, embeddings, collection)
+    document_id = str(store(title, text_chunks, embeddings, collection))
 
     # returns {"message": "success", "chunks": len(chunks)}
     return DocUploadResponse(
-        message="success", 
-        chunk_count=len(text_chunks)
+        message="success",
+        document_id=document_id,
+        document_title=title
     )

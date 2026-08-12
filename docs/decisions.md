@@ -94,33 +94,32 @@ that needs to be readable by interviewers.
 
 ---
 
-## ADR-004: RecursiveCharacterTextSplitter with 500-char chunks and 150-char overlap
+## ADR-004: MarkdownHeaderTextSplitter with custom title and text extraction
 
-**Date:** June 2026
-**Status:** Active (revisit chunking strategy in V2)
+**Date:** July 2026
+**Status:** Active (revisit after further testing in V2)
 
 **Decision:**
-Use LangChain's `RecursiveCharacterTextSplitter` with `chunk_size=500` and
-`chunk_overlap=150` as the baseline chunking strategy.
+Use `MarkdownHeaderTextSplitter` for structural text splitting, changing from
+`RecursiveCharacterTextSplitter` that previously served as baseline chunking strategy.
+
 
 **Reasoning:**
-RecursiveCharacterTextSplitter respects natural text boundaries (paragraphs, sentences)
-before falling back to character splits, producing more semantically coherent chunks than
-a naive fixed-size splitter. The 150-character overlap was increased from an initial 50
-after observing a known failure mode: section headings (e.g. "Hindquarters:") were being
-split from their description content, causing retrieval to return chunks without enough
-context for the LLM to answer correctly.
+RecursiveCharacterTextSplitter was not a sufficient chunking strategy largely due to 
+lack of context. Current implementation addresses this by extracting title and headers
+providing context for each text chunk. Furthermore, chunks are more organized and properly
+segmented in relation to its topic, in contrast with the previous implementation's
+arbitrary segmentation based off of character count.
 
 **Known limitations:**
-- Character-based chunk size is an approximation — actual token count varies by content.
-  A future improvement is token-aware chunking using `tiktoken` to guarantee chunks stay
-  within embedding model context limits.
-- Overlap reduces but does not eliminate boundary splits for long sections. Retrieval
-  quality still degrades when an answer spans more than two consecutive chunks.
+- Custom text splitter is quite simple currently. Title is determined by largest text
+on the front page. Header hierarchy is determined purely by largest font size, and other
+assumptions are made regarding valid heading size, noise threshold, and minimum occurence.
+Documents that deviate from the assumptions will be innaccurately split. Notably does not
+address other header indicators such as bold text which presented too much variance.
+
 
 **Planned improvements:**
-- V2: Switch to token-aware chunking with `tiktoken` for precise context window control
-- V2: Experiment with larger chunk sizes (1000 tokens) for documents with long sections
 - V2: Store chunk metadata (page number, section heading) to enable source citations
 
 ---
