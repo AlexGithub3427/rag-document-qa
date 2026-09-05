@@ -9,10 +9,11 @@ flowchart LR
     A[React + Vite\nUpload PDF / ask questions] -->|HTTP REST| B[FastAPI\nPOST /documents\nPOST /query]
     B --> C[ChromaDB\nVector storage]
     B -->|embeddings + generation| D[OpenAI API\ntext-embedding-3-small\ngpt-4o-mini]
+    B --> E[PostgreSQL\nDocuments + chat history]
 ```
 
 ## Tech Stack
-- FastAPI, ChromaDB, OpenAI (text-embedding-3-small, gpt-4o-mini), React + Vite
+- FastAPI, ChromaDB, Postgres, OpenAI (text-embedding-3-small, gpt-4o-mini), React + Vite
 - V3: pgvector, JWT auth, streaming responses
 
 ## Getting Started
@@ -26,6 +27,11 @@ flowchart LR
     pip install -r requirements.txt
     fastapi dev
     # backend running at localhost:8000, docs at localhost:8000/docs
+
+2b. Database setup
+    # requires a Postgres running instance
+    docker run --name rag-postgres -e POSTGRES_PASSWORD=... -p 5432:5432 -d postgres
+    # set database keys in .env
 
 3. Frontend setup (in a new terminal)
     cd app/frontend
@@ -48,13 +54,16 @@ rag-document-qa/
 - Chunking at 500 chars can split section headings from their content,
   degrading retrieval on boundary-spanning answers. Planned fix: larger 
   chunks + overlap in V2.
+- Extracted page headers are improperly stored as text chunks, possibly 
+  worsening retrieval quality. Planned fix:
 - Chroma used for V1/V2, migrating to pgvector in V3 for stack consolidation.
+
 
 ## Roadmap
 - [X] V1: pipeline_test.py: working RAG loop (proof of concept)
 - [X] V1: FastAPI backend (/documents, /query)
 - [X] V1: React + Vite frontend
-- [ ] V2: Multi-doc, chat history, citations
+- [X] V2: Multi-doc, chat history, (invisible) citations
 - [ ] V3: Auth, streaming, eval metrics
 
 ## Demo

@@ -1,25 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FileUpload from './FileUpload';
 import ChatWindow from './ChatWindow';
+import Sidebar from './Sidebar';
 
-import { useEffect } from 'react';
+import { Document } from './types'
 
 function App() {
-  const [documentReady, setDocumentReady] = useState(false)
-  // const [documentId, setDocumentId] = useState(null);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [renderUpload, setRenderUpload] = useState(true);
+  const [documentReady, setDocumentReady] = useState(false);
+  const [activeDocument, setActiveDocument] = useState<Document | null>(null);
 
   return (
     <div className="App">
       <h1>Document Q&A</h1>
-      <FileUpload 
+      <Sidebar 
+        activeDocumentId={activeDocument ? activeDocument.id : ""}
+        onSelectDocument={(doc) => {
+          setActiveDocument(doc);
+          setDocumentReady(true);
+          setRenderUpload(false);          
+        }
+        }
+        onUploadNew={() => {
+          setRenderUpload(true)
+        }}
+        refreshKey={refreshKey}
+      />
+      {renderUpload && <FileUpload 
         onUploadSuccess={(data) => {
-          setDocumentReady(true)
+          setDocumentReady(true);
+          const document: Document = {
+            title: data.document_title,
+            id: data.document_id,
+          }
+          setActiveDocument(document)
+          setRefreshKey((prevKey) => prevKey + 1)
         }}
         onFileSelected={() => {
-          setDocumentReady(false)
+          setDocumentReady(false);
+          setActiveDocument(null);
         }}
-      />
-      <ChatWindow documentReady={documentReady}
+      />}
+      
+
+      <ChatWindow
+        freshUpload={renderUpload}
+        documentReady={documentReady} 
+        activeDocument={activeDocument}
       />
     </div>
   );

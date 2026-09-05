@@ -1,19 +1,35 @@
 from openai import OpenAI
-from chromadb.api.types import Document
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.prompts import build_context_string, build_rag_prompt
+from services.retriever import store_chat_exchange
+
 from models.schemas import Chunk
 
-# function generate(question, context):
-#     build prompt string with context and question
-#     call client.responses.create(model, input=prompt)
-#     return response.output_text
-def generate(question: str, document_title: str, retrieved_chunks: list[Chunk], client: OpenAI) -> str:
+ 
+async def generate(question: str, document_id: str, document_title: str, retrieved_chunks: list[Chunk], session: AsyncSession, client: OpenAI) -> str:
+    """
+    Generates AI response to user submitted question
+
+    Parameters:
+    ** question: Question submitted by the user
+    ** document_title: Title of the corresponding document
+    ** retrieved_chunks: List of chunks retrieved by search function supplying document context
+    ** session: DB asyncronous session to store the question-response
+    ** client: client object to call AI API
+
+    Returns:
+    str: The AI generated response to the user question 
+    """
     context = build_context_string(retrieved_chunks)
     system_prompt = build_rag_prompt(question, document_title, context)
     response = client.responses.create(
         model="gpt-4o-mini",
         input=system_prompt
     )
+    answer = response.output_text
 
-    return response.output_text
+    await store_chat_exchange(question, document_id, retrieved_chunks, answer, session)
+
+    return answer

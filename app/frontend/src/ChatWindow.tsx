@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, act } from 'react'
 
-import { QueryResponse } from './types'
+import { DocHistoryRetrievalResponse, Document, QueryRequest, QueryResponse, Role } from './types'
 
 interface ChatWindowProps {
+    freshUpload: boolean | null;
     documentReady: boolean;
+    activeDocument: Document | null;
 }
 
 type Message = {
@@ -11,17 +13,50 @@ type Message = {
     answer: string;
 }
 
-export default function ChatWindow({ documentReady }: ChatWindowProps) {
+export default function ChatWindow({ freshUpload, documentReady, activeDocument }: ChatWindowProps) {
     const [question, setQuestion] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
-        if (!documentReady) {
+        if (freshUpload || !activeDocument) {
             setMessages([]);
+        } else {
+            let active = true;
+
+            (async () => {
+                try {
+                    setStatus('loading');
+                    const response = await fetch(`http://localhost:8000/documents/${activeDocument.id}/history/`, {
+                        method: 'GET',
+                    });
+
+                    if (!response.ok) throw new Error (`Document history fetch failed. Status: ${response.status}`);
+                    
+                    const data: DocHistoryRetrievalResponse = await response.json();
+                    console.log(data)
+
+                    if (!active) return;
+
+                    const question_history = data.content_list
+                        .map((content, i) => ({ content, i }))
+                        .filter(item => data.role_list[item.i] === Role.USER)
+                        .map(item => item.content)
+                    const answer_history = data.content_list
+                        .map((content, i) => ({ content, i }))
+                        .filter(item => data.role_list[item.i] === Role.ASSISTANT)
+                        .map(item => item.content)
+                    const chat_history = question_history.map((content, i) => ({ question: content,  answer: answer_history[i] }));
+                    setMessages(chat_history);
+                    setStatus('idle');
+                } catch (error) {
+                    setStatus('error');
+                    setErrorMessage(error instanceof Error ? error.message : 'unknown error loading chat history');
+                }
+            })();
         }
-    }, [documentReady]);
+    }, [freshUpload, activeDocument]);
 
     function handleQuestionChange(e: React.ChangeEvent<HTMLInputElement>) {
         setQuestion(e.target.value);
@@ -29,16 +64,18 @@ export default function ChatWindow({ documentReady }: ChatWindowProps) {
 
     async function handleSubmit() {
         console.log('Ask pressed');
-        if (!question || status === 'loading') return;
+        if (!activeDocument || !question || status === 'loading') return;
         setStatus('loading');
 
         try {
+            const query_payload: QueryRequest = {
+                question: question,
+                document_id: activeDocument.id,
+            }
             const response = await fetch('http://localhost:8000/query', {
                 method: 'POST',
                 headers: { "Content-Type": "application/json"},
-                body: JSON.stringify({
-                    question: question
-                })
+                body: JSON.stringify(query_payload)
             });
 
             if (!response.ok) throw new Error(`Submission failed. Status: ${response.status}`);
@@ -50,7 +87,6 @@ export default function ChatWindow({ documentReady }: ChatWindowProps) {
             
             setQuestion('');
             setStatus('idle');
-
         } catch (error) {
             setStatus('error');
             setErrorMessage(error instanceof Error ? error.message : 'unknown error submitting question');

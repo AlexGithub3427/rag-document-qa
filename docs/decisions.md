@@ -35,7 +35,43 @@ rather than running a separate vector DB alongside it.
 
 ---
 
-## ADR-002: text-embedding-3-small over text-embedding-3-large
+## ADR-002: Postgres for persistent chat history
+
+**Date** September 2026
+**Status** Active (revisit to integrate as sole database)
+
+**Decision** 
+Introduce Postgres in V2 for persistent chat history and document records, ahead of pgvector migration
+planned in V3. Chromadb is still sole vector store.
+
+**Reasoning**
+Since V2 requires document resume beyond that of React states, integrating Postgres now avoids a 
+second migration later from SQLite to Postgres when pgvector migration takes place.
+
+**Schema**
+- `documents`: id, title, created_at
+- `chat_messages`: id, document_id, role, content, citations, created_at
+
+**Tradeoffs**
+- Two active storage systems (Chroma and Postgres) that will require future rewiring upon removal
+- Simplified migration from Chromadb to pgvector (already a running Postgres instance)
+
+---
+
+## ADR-003: SQLAlchemy + asyncpg for Postgres access
+
+**Decision:**
+Use SQLAlchemy (async) with the asyncpg driver for all Postgres access.
+
+**Reasoning:**
+SQLAlchemy's async support pairs with FastAPI's async-native design, avoiding blocking calls on the event loop under load. Defining Document and ChatMessage as models also keeps schema definitions in Python alongside existing Pydantic schemas, rather than maintaining hand-written SQL strings as the schema grows.
+
+**Tradeoffs:**
+-Adds an ORM abstraction layer on top of what is currently a simple two-table schema
+
+---
+
+## ADR-004: text-embedding-3-small over text-embedding-3-large
 
 **Date:** June 2026
 **Status:** Active (revisit if retrieval quality is insufficient in V2)
@@ -66,7 +102,7 @@ insufficient, upgrade to 3-large. The cost increase is acceptable at portfolio s
 
 ---
 
-## ADR-003: FastAPI over Flask and Django for the backend
+## ADR-005: FastAPI over Flask and Django for the backend
 
 **Date:** June 2026
 **Status:** Active
@@ -94,7 +130,7 @@ that needs to be readable by interviewers.
 
 ---
 
-## ADR-004: MarkdownHeaderTextSplitter with custom title and text extraction
+## ADR-006: MarkdownHeaderTextSplitter with custom title and text extraction
 
 **Date:** July 2026
 **Status:** Active (revisit after further testing in V2)
@@ -124,7 +160,7 @@ address other header indicators such as bold text which presented too much varia
 
 ---
 
-## ADR-005: Dockerized microservices architecture
+## ADR-007: Dockerized microservices architecture
 
 **Date:** June 2026
 **Status:** Planned for end of V1

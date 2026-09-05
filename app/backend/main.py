@@ -6,14 +6,37 @@ from routers import documents, query
 from contextlib import asynccontextmanager
 from openai import OpenAI
 
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from dotenv import load_dotenv
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # -- Startup --
     app.state.chroma = chromadb.PersistentClient(path="./chroma")
     app.state.collection = app.state.chroma.get_or_create_collection("documents")
+
+    load_dotenv()
+    user = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT")
+    db = os.getenv("POSTGRES_DB")
+    postgres_url = f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+
+    app.state.engine = create_async_engine(
+        postgres_url,
+        echo=True,
+        pool_size=5,
+        max_overflow=5,
+        pool_recycle=1800
+    )
+
     app.state.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     yield
+
+    await app.state.engine.dispose()
     # -- Shutdown --
     
 
