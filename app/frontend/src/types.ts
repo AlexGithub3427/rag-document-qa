@@ -1,10 +1,9 @@
 
-interface Chunk {
+export interface Chunk {
     text: string;
     header_path: string;
 }
 
-type RecordOrNone = Record<string, unknown> | null | undefined;
 
 export const enum Role {
     USER = "user",
@@ -30,7 +29,7 @@ export interface DocRetrievalResponse {
 export interface DocHistoryRetrievalResponse {
     role_list: Role[];
     content_list: string[];
-    citations_list: RecordOrNone[];
+    citations_list: (Chunk[] | null)[];
 }
 
 export interface QueryRequest {

@@ -63,7 +63,7 @@ rag-document-qa/
 - [X] V1: pipeline_test.py: working RAG loop (proof of concept)
 - [X] V1: FastAPI backend (/documents, /query)
 - [X] V1: React + Vite frontend
-- [X] V2: Multi-doc, chat history, (invisible) citations
+- [X] V2: Multi-doc, chat history, citations
 - [ ] V3: Auth, streaming, eval metrics
 
 ## Demo

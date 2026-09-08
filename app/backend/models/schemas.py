@@ -1,10 +1,6 @@
 from pydantic import BaseModel
 
-from models.db import Role
-
-class Chunk(BaseModel):
-    text: str
-    header_path: str
+from models.db import Role, Chunk
 
 
 class DocUploadResponse(BaseModel):
@@ -19,7 +15,7 @@ class DocRetrievalResponse(BaseModel):
 class DocHistoryRetrievalResponse(BaseModel):
     role_list: list[Role]
     content_list: list[str]
-    citations_list: list[dict | None]
+    citations_list: list[list[Chunk] | None]
 
 
 class QueryRequest(BaseModel):

@@ -6,9 +6,10 @@ from routers import documents, query
 from contextlib import asynccontextmanager
 from openai import OpenAI
 
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from dotenv import load_dotenv
+from engine.json_serializer import custom_serializer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI):
     app.state.engine = create_async_engine(
         postgres_url,
         echo=True,
+        json_serializer=custom_serializer,
         pool_size=5,
         max_overflow=5,
         pool_recycle=1800

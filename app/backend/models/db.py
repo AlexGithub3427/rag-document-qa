@@ -10,7 +10,7 @@ from fastapi import Depends, Request
 from sqlalchemy import Text, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, JSON, Column
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -36,12 +36,16 @@ class Role(StrEnum):
     USER = "user"
     ASSISTANT = "assistant"
 
+class Chunk(SQLModel):
+    text: str
+    header_path: str
+
 class ChatMessageBase(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     document_id: str = Field(foreign_key="documents.id")
     role: Role
     content: str = Field(sa_type=Text)
-    citations: Optional[dict] = Field(default=None, sa_type=JSONB)
+    citations: Optional[list[Chunk]] = Field(default=None, sa_type=JSON)
 
 class ChatMessageCreate(ChatMessageBase):
     pass

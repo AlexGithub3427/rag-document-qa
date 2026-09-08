@@ -24,7 +24,7 @@ async def store_document(title: str, text_chunks: list[Document], embeddings: li
     )
 
     document = DocumentCreate(id=document_id, title=title)
-    db_document = Document(**document.model_dump())
+    db_document = Document.model_validate(document)
     session.add(db_document)
     await session.commit()
     # session.refresh(db_document)
@@ -33,14 +33,12 @@ async def store_document(title: str, text_chunks: list[Document], embeddings: li
 
 async def store_chat_exchange(question: str, document_id: str, retrieved_chunks: list[Chunk], answer: str, session: AsyncSession) -> None:
     user_message = ChatMessageCreate(document_id=document_id, role=Role.USER, content=question)
-    db_user_message = ChatMessage(**user_message.model_dump())
+    db_user_message = ChatMessage.model_validate(user_message)
     session.add(db_user_message)
     await session.commit()
 
-    citations = {index: chunk.model_dump() for index, chunk in enumerate(retrieved_chunks)}
-    assistant_message = ChatMessageCreate(document_id=document_id, role=Role.ASSISTANT, content=answer, citations=citations)
-    db_assistant_message = ChatMessage(**assistant_message.model_dump())
-
+    assistant_message = ChatMessageCreate(document_id=document_id, role=Role.ASSISTANT, content=answer, citations=retrieved_chunks)
+    db_assistant_message = ChatMessage.model_validate(assistant_message)
     session.add(db_assistant_message)
     await session.commit()
 
@@ -73,7 +71,7 @@ async def retrieve_all_documents(session: AsyncSession) -> list[tuple[str, str]]
 
     return list(zip(document_ids, document_titles))
 
-async def retrieve_document_history(document_id: str, session: AsyncSession) -> list[tuple[Role, str, dict]]:
+async def retrieve_document_history(document_id: str, session: AsyncSession) -> list[tuple[Role, str, list[Chunk]]]:
     stmt = select(ChatMessage).where(ChatMessage.document_id == document_id).order_by(ChatMessage.id)
     result = await session.execute(stmt)
     chat_messages = result.scalars().all()

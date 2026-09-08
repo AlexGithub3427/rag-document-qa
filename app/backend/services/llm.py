@@ -8,7 +8,7 @@ from services.retriever import store_chat_exchange
 from models.schemas import Chunk
 
  
-async def generate(question: str, document_id: str, document_title: str, retrieved_chunks: list[Chunk], session: AsyncSession, client: OpenAI) -> str:
+def generate(question: str, document_title: str, retrieved_chunks: list[Chunk], client: OpenAI) -> str:
     """
     Generates AI response to user submitted question
 
@@ -29,7 +29,5 @@ async def generate(question: str, document_id: str, document_title: str, retriev
         input=system_prompt
     )
     answer = response.output_text
-
-    await store_chat_exchange(question, document_id, retrieved_chunks, answer, session)
 
     return answer

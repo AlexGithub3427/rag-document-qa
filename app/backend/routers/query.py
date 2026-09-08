@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel
 
 from services.embedder import embed_question
-from services.retriever import search
+from services.retriever import search, store_chat_exchange
 from services.llm import generate
 
 from models.schemas import QueryRequest, QueryResponse
@@ -28,7 +28,10 @@ async def handle_query(request: Request, body: QueryRequest, session: SessionDep
     retrieved_chunks, document_title = search(body.document_id, embedding, collection, session)
 
     # calls llm.generate(question, context)
-    answer = await generate(body.question, body.document_id, document_title, retrieved_chunks, session, openai_client)
+    answer = generate(body.question, document_title, retrieved_chunks, openai_client)
+
+    # store chat exchange
+    await store_chat_exchange(body.question, body.document_id, retrieved_chunks, answer, session)
 
     # returns QueryResponse of answer and retrieved chunks
     return QueryResponse(

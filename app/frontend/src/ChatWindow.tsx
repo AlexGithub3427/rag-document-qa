@@ -1,6 +1,6 @@
 import { useState, useEffect, act } from 'react'
 
-import { DocHistoryRetrievalResponse, Document, QueryRequest, QueryResponse, Role } from './types'
+import { DocHistoryRetrievalResponse, Document, Chunk, QueryRequest, QueryResponse, Role } from './types'
 
 interface ChatWindowProps {
     freshUpload: boolean | null;
@@ -11,6 +11,7 @@ interface ChatWindowProps {
 type Message = {
     question: string;
     answer: string;
+    citations: string;
 }
 
 export default function ChatWindow({ freshUpload, documentReady, activeDocument }: ChatWindowProps) {
@@ -35,20 +36,28 @@ export default function ChatWindow({ freshUpload, documentReady, activeDocument 
                     if (!response.ok) throw new Error (`Document history fetch failed. Status: ${response.status}`);
                     
                     const data: DocHistoryRetrievalResponse = await response.json();
-                    console.log(data)
+                    console.log(data);
 
                     if (!active) return;
 
-                    const question_history = data.content_list
+                    const questionHistory = data.content_list
                         .map((content, i) => ({ content, i }))
                         .filter(item => data.role_list[item.i] === Role.USER)
-                        .map(item => item.content)
-                    const answer_history = data.content_list
+                        .map(item => item.content);
+                    const answerHistory = data.content_list
                         .map((content, i) => ({ content, i }))
                         .filter(item => data.role_list[item.i] === Role.ASSISTANT)
-                        .map(item => item.content)
-                    const chat_history = question_history.map((content, i) => ({ question: content,  answer: answer_history[i] }));
-                    setMessages(chat_history);
+                        .map(item => item.content);
+                    const citationHistory = data.citations_list
+                        .filter(citations => citations !== null)
+                        .map(citations => formatCitations(citations));
+    
+                    const chatHistory = questionHistory.map((content, i) => ({ 
+                        question: content,  
+                        answer: answerHistory[i],
+                        citations: citationHistory[i]
+                     }));
+                    setMessages(chatHistory);
                     setStatus('idle');
                 } catch (error) {
                     setStatus('error');
@@ -83,7 +92,7 @@ export default function ChatWindow({ freshUpload, documentReady, activeDocument 
             const data: QueryResponse = await response.json();
             console.log(data);
             
-            setMessages(prev => [...prev, { question, answer: data.answer }]);
+            setMessages(prev => [...prev, { question, answer: data.answer, citations: formatCitations(data.chunks)}]);
             
             setQuestion('');
             setStatus('idle');
@@ -100,6 +109,7 @@ export default function ChatWindow({ freshUpload, documentReady, activeDocument 
                     <div key={i}>
                         <p><strong>Q: </strong>{message.question}</p>
                         <p><strong>A: </strong>{message.answer}</p>
+                        <p><strong>citations: </strong>{message.citations}</p>
                     </div>
                 ))}
             </div>
@@ -124,4 +134,11 @@ export default function ChatWindow({ freshUpload, documentReady, activeDocument 
 
         </div>
     );
+}
+
+// citation formatter function placeholder for now
+function formatCitations(citations: Chunk[]): string {
+    return citations.reduce<string>((groupedCitation, currentCitation) => {
+        return groupedCitation + currentCitation.header_path + ":" + currentCitation.text + "\n";
+    }, "");
 }
