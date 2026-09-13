@@ -27,7 +27,7 @@ flowchart LR
     cp .env.example .env  # add your OpenAI key
     pip install -r requirements.txt
     fastapi dev
-    # backend running at localhost:8000, docs at localhost:8000/docs
+    (backend running at localhost:8000, docs at localhost:8000/docs)
 
 2b. Database setup
     # requires a Postgres running instance
@@ -38,7 +38,7 @@ flowchart LR
     cd app/frontend
     npm install
     npm run dev
-    # frontend running at localhost:5173
+    (frontend running at localhost:5173)
 
 4. Open localhost:5173 in your browser
 
