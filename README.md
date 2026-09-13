@@ -1,6 +1,7 @@
 # RAG Document Q&A System
 
 Upload PDFs and ask questions. Returns grounded answers with document citations.
+THIS PROJECT HAS BEEN RETIRED.
 
 ## Architecture
 
@@ -64,7 +65,4 @@ rag-document-qa/
 - [X] V1: FastAPI backend (/documents, /query)
 - [X] V1: React + Vite frontend
 - [X] V2: Multi-doc, chat history, citations
-- [ ] V3: Auth, streaming, eval metrics
 
-## Demo
-- Screenshots and demo link coming
